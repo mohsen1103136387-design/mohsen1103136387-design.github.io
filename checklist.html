@@ -10,7 +10,7 @@ body{font-family:Tahoma,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;p
 header{position:sticky;top:0;background:#1e293b;padding:12px 16px;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.4)}
 h1{font-size:17px;color:#7dd3fc;margin-bottom:8px}
 .bar{background:#334155;height:12px;border-radius:8px;overflow:hidden}
-.fill{background:linear-gradient(90deg,#22c55e,#4ade80);height:100%;width:0%;transition:width .4s;border-radius:8px}
+.fill{background:linear-gradient(90deg,#22c55e,#4ade80);height:100%;width:0%;transition:width .4s}
 .stat{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .chip{background:#334155;padding:4px 10px;border-radius:12px;font-size:12px}
 .chip b{color:#4ade80}
@@ -26,18 +26,23 @@ h1{font-size:17px;color:#7dd3fc;margin-bottom:8px}
 .wfill{background:#4ade80;height:100%;width:0%;transition:width .4s}
 .wbody{display:none}
 .week.open .wbody{display:block}
-.day{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #334155;cursor:pointer}
-.day:last-child{border-bottom:none}
+.row{display:flex;align-items:stretch;border-bottom:1px solid #334155}
+.dw:last-child .row{border-bottom:none}
+.day{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;flex:1}
 .day input{width:26px;height:26px;accent-color:#22c55e;cursor:pointer;flex-shrink:0}
 .txt{flex:1}
 .num{font-weight:bold;color:#7dd3fc;font-size:12px}
 .code{font-size:14px;display:block}
 .eng{font-size:12px;color:#94a3b8;display:block;margin-top:2px}
-.day.done{background:rgba(34,197,94,.08)}
-.day.done .code,.day.done .eng{text-decoration:line-through;opacity:.45}
-.day.next{border:2px solid #f59e0b;animation:pulse 1.6s infinite}
+.info{background:#334155;border:none;color:#7dd3fc;font-size:16px;padding:0 14px;cursor:pointer;flex-shrink:0}
+.dw.done .row{background:rgba(34,197,94,.08)}
+.dw.done .code,.dw.done .eng{text-decoration:line-through;opacity:.45}
+.dw.next .row{border:2px solid #f59e0b;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
-.hide-done .day.done{display:none}
+.detail{display:none;background:#0b1220;padding:12px 16px;font-size:13px;line-height:1.9;border-right:4px solid #2874a6}
+.dw.open .detail{display:block}
+.detail b{color:#7dd3fc}
+.hide-done .dw.done{display:none}
 .fab{position:fixed;bottom:18px;right:16px;background:#2874a6;color:#fff;border:none;padding:14px 18px;border-radius:30px;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.5);z-index:20}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#22c55e;color:#052e16;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;white-space:nowrap}
 #toast.show{opacity:1}
@@ -63,45 +68,115 @@ h1{font-size:17px;color:#7dd3fc;margin-bottom:8px}
 <div id="toast"></div>
 <div id="party">🎉🎊<br>تبریک!<br>کل برنامه رو تموم کردی!<br>تو حالا یک برنامه‌نویس واقعی هستی! 🏆</div>
 <script>
+const TIME="⏰ <b>صبح ۳۰د:</b> زبان | <b>عصر ۶۰د:</b> کد | <b>شب ۳۰د:</b> زبان";
+const S_HTML="آپارات: سرچ «آموزش HTML از صفر» • W3Schools: HTML Tutorial";
+const S_CSS="آپارات: سرچ «آموزش CSS از صفر» • W3Schools: CSS Tutorial";
+const S_JS="TopLearn: دورهٔ رایگان JavaScript • آپارات: سرچ «آموزش JavaScript»";
+const S_DOM="W3Schools: JS HTML DOM • آپارات: سرچ «DOM جاوااسکریپت»";
+const S_API="W3Schools: JS Fetch API • آپارات: سرچ «fetch»";
+const S_GIT="آپارات: سرچ «آموزش Git و GitHub» • W3Schools: Git Tutorial";
+const E_V="🌍 <b>صبح:</b> Anki ۲۰ لغت جدید + مرور دیروز • b-amooz: لغت درس امروز";
+const E_G="🌙 <b>شب:</b> b-amooz: گرامر درس امروز + نوشتن ۱۰ جمله مثال";
+const E_R="🌙 <b>شب:</b> خواندن ۱ متن کوتاه (b-amooz / Simple Wikipedia) + خلاصه";
+const E_L="🌅 <b>صبح:</b> آپارات: سرچ «مکالمه انگلیسی» ۱۰ دقیقه گوش بده";
+const E_W="🌙 <b>شب:</b> ۵ تا ۰ جمله دربارهٔ موضوع امروز بنویس";
+const REST="☕ استراحت کامل؛ فقط 🎬 فیلم/سریال با زیرنویس انگلیسی";
 const W=[
-{t:"هفتهٔ ۱: HTML/CSS + لغات پایه",d:[[1,"تگ‌های HTML (h1-h6, p, div, img)","۲۰ لغت + پادکست"],[2,"لینک و لیست (a, ul, li)","گرامر I am / You are"],[3,"CSS پایه (color, font)","نوشتن ۵ جمله"],[4,"Box Model (margin, padding)","گرامر This / That"],[5,"تمرین: کارت محصول","داستان کوتاه A1"],[6,"مرور هفته + رفع اشکال","نوشتن ۱۰ جمله"],[7,"☕ استراحت","🎬 فیلم با زیرنویس"]]},
-{t:"هفتهٔ ۲: CSS پیشرفته + گذشته",d:[[8,"Flexbox پایه","گرامر گذشته (was/were)"],[9,"تمرین Flexbox (۳ ستون)","جملات گذشته"],[10,"CSS Grid پایه","خبر ساده انگلیسی"],[11,"تمرین Grid (گالری)","جملات سوالی"],[12,"Responsive (media query)","نوشتن دربارهٔ روز"],[13,"پروژه: صفحهٔ پروفایل","ویرایش متن"],[14,"☕ استراحت","🎬 سریال"]]},
-{t:"هفتهٔ ۳: JavaScript مقدماتی",d:[[15,"متغیرها (let, const)","گرامر آینده (will)"],[16,"انواع داده","جملات آینده"],[17,"عملگرها (+ - * /)","متن کوتاه"],[18,"شرط‌ها (if/else)","جملات شرطی"],[19,"تمرین: برنامهٔ سن‌سنج","۱۰ جمله شرطی"],[20,"مرور + رفع اشکال","مرور گرامر"],[21,"☕ استراحت","🎬 فیلم"]]},
-{t:"هفتهٔ ۴: توابع + حلقه‌ها",d:[[22,"توابع (function)","حروف اضافه (in/on/at)"],[23,"تمرین: ماشین حساب","تمرین حروف اضافه"],[24,"حلقهٔ for","داستان کوتاه"],[25,"حلقهٔ while","پاراگراف ۷ جمله‌ای"],[26,"آرایه‌ها (Array)","گرامر مقایسه‌ای"],[27,"پروژه: ماشین حساب کامل","نوشتن دربارهٔ پروژه"],[28,"🎉 جشن ماه اول","📊 تست سطح زبان"]]},
-{t:"هفتهٔ ۵: DOM + لغات تکنولوژی",d:[[29,"DOM و querySelector","مقالهٔ ساده"],[30,"تغییر متن (textContent)","تمرین گرامر"],[31,"تغییر استایل (style)","نوشتن دربارهٔ DOM"],[32,"Event Listener (click)","مستندات انگلیسی"],[33,"تمرین: دکمه‌های رنگی","گرامر مجهول"],[34,"مرور + رفع اشکال","مرور لغات"],[35,"☕ استراحت","🎬 فیلم"]]},
-{t:"هفتهٔ ۶: پروژهٔ Todo List",d:[[36,"شروع Todo (HTML)","گرامر حال کامل"],[37,"استایل Todo (CSS)","تمرین گرامر"],[38,"اضافه کردن آیتم (JS)","مقاله"],[39,"حذف آیتم","نوشتن دربارهٔ پروژه"],[40,"LocalStorage","گرامر شرطی نوع ۲"],[41,"تکمیل + باگ‌گیری","مرور لغات"],[42,"☕ استراحت","🎬 فیلم"]]},
-{t:"هفتهٔ ۷: API",d:[[43,"مفهوم API و fetch","مستندات API"],[44,"تمرین fetch","گرامر نقل قول"],[45,"JSON و نمایش داده","تمرین گرامر"],[46,"پروژه: اپ آب و هوا","نوشتن دربارهٔ API"],[47,"ادامهٔ پروژه + استایل","مقالهٔ تکنولوژی"],[48,"تکمیل + باگ‌گیری","مرور گرامر"],[49,"☕ استراحت","🎬 فیلم"]]},
-{t:"هفتهٔ ۸: GitHub + پایان سفر",d:[[50,"ساخت GitHub + Git پایه","مطالعهٔ GitHub"],[51,"آپلود پروژه","README انگلیسی"],[52,"GitHub Pages (انتشار)","تمرین گرامر"],[53,"انتشار پروژه‌های قبلی","نوشتن دربارهٔ GitHub"],[54,"مرور کل دوره","📊 تست سطح زبان"],[55,"پروژهٔ نهایی دلخواه","مرور لغات"],[56,"🎉 جشن پایان","📊 مقایسهٔ سطح"]]}
+{t:"هفتهٔ ۱: HTML/CSS + لغات پایه",d:[
+[1,"تگ‌های HTML (h1-h6, p, div, img)","۲۰ لغت + پادکست","تگ یعنی «برچسب»؛ مثل <p> برای پاراگراف یا <img> برای عکس. کل صفحه از همین برچسب‌ها ساخته می‌شه.",S_HTML,E_V],
+[2,"لینک و لیست (a, ul, li)","گرامر I am / You are","با <a> لینک می‌سازی و با <ul>/<li> فهرست نقطه‌ای. برای منو و لیست‌ها لازمه.",S_HTML,E_G],
+[3,"CSS پایه (color, font)","نوشتن ۵ جمله","CSS یعنی «استایل»؛ به عنصرها رنگ، فونت و ظاهر می‌ده. HTML اسکلت است، CSS پوست!",S_CSS,E_W],
+[4,"Box Model (margin, padding)","گرامر This/That","هر عنصر یک جعبه‌ست: محتوا + فاصلهٔ داخلی (padding) + حاشیه (margin). چیدمان با همینه.",S_CSS,E_G],
+[5,"تمرین: کارت محصول","داستان کوتاه A1","ترکیبی: یک کارت با عکس، اسم و قیمت بساز تا HTML+CSS جا بیفته.",S_CSS,E_R],
+[6,"مرور هفته + رفع اشکال","نوشتن ۱۰ جمله","کدهای این هفته رو دوباره باز کن و بدون نگاه کردن به آموزش، از صفر بنویس.",S_HTML,E_W],
+[7,"☕ استراحت","🎬 فیلم با زیرنویس",REST,"—",E_L]]},
+{t:"هفتهٔ ۲: CSS پیشرفته + گذشته",d:[
+[8,"Flexbox پایه","گرامر گذشته (was/were)","Flexbox یعنی چیدمان ردیفی/ستونیِ منعطف؛ عنصرها رو کنار هم یا زیر هم می‌چینه.",S_CSS,E_G],
+[9,"تمرین Flexbox (۳ ستون)","جملات گذشته","با justify-content و align-items سه ستون کنار هم بساز.",S_CSS,E_G],
+[10,"CSS Grid پایه","خبر ساده انگلیسی","Grid یعنی چیدمان شبکه‌ای (سطر+ستون همزمان)؛ برای صفحه‌آرایی‌های پیچیده‌تر.",S_CSS,E_R],
+[11,"تمرین Grid (گالری)","جملات سوالی","یک گالری عکس ۳در۳ با Grid بساز.",S_CSS,E_G],
+[12,"Responsive (media query)","نوشتن دربارهٔ روز","یعنی صفحه روی موبایل و کامپیوتر هر دو خوب دیده بشه؛ با @media سایزها رو عوض می‌کنی.",S_CSS,E_W],
+[13,"پروژه: صفحهٔ پروفایل","ویرایش متن","همهٔ مهارت‌های دوهفته رو ترکیب کن: یک صفحهٔ دربارهٔ خودت.",S_CSS,E_W],
+[14,"☕ استراحت","🎬 سریال",REST,"—",E_L]]},
+{t:"هفتهٔ ۳: JavaScript مقدماتی",d:[
+[15,"متغیرها (let, const)","گرامر آینده (will)","متغیر یعنی «جعبهٔ حافظه» که توش مقدار نگه می‌داری؛ let قابل تغییر، const ثابت.",S_JS,E_G],
+[16,"انواع داده","جملات آینده","متن (string)، عدد (number)، بله/خیر (boolean)؛ نوع هر داده رو بشناس.",S_JS,E_G],
+[17,"عملگرها (+ - * /)","متن کوتاه","جمع و تفریق و ضرب و تقسیم در جاوااسکریپت؛ پایهٔ هر محاسبه.",S_JS,E_R],
+[18,"شرط‌ها (if/else)","جملات شرطی","یعنی «اگه این شد، اون کار رو بکن»؛ تصمیم‌گیری در کد.",S_JS,E_G],
+[19,"تمرین: برنامهٔ سن‌سنج","۱۰ جمله شرطی","سن رو بگیر و بگو کودک/نوجوان/بزرگسال؛ تمرین عملی شرط.",S_JS,E_G],
+[20,"مرور + رفع اشکال","مرور گرامر","بدون نگاه به آموزش، یک برنامهٔ کوچیک با متغیر و شرط بنویس.",S_JS,E_G],
+[21,"☕ استراحت","🎬 فیلم",REST,"—",E_L]]},
+{t:"هفتهٔ ۴: توابع + حلقه‌ها",d:[
+[22,"توابع (function)","حروف اضافه (in/on/at)","تابع یعنی یک بلوک کدِ قابل استفادهٔ مجدد؛ یک بار بنویس، هر جا صدا بزن.",S_JS,E_G],
+[23,"تمرین: ماشین حساب","تمرین حروف اضافه","جمع/تفریق/ضرب/تقسیم رو به‌صورت تابع بنویس.",S_JS,E_G],
+[24,"حلقهٔ for","داستان کوتاه","یعنی «این کار رو N بار تکرار کن»؛ برای کارهای تکراری.",S_JS,E_R],
+[25,"حلقهٔ while","پاراگراف ۷ جمله‌ای","مثل for ولی تا وقتی یک شرط برقراره تکرار می‌کنه.",S_JS,E_W],
+[26,"آرایه‌ها (Array)","گرامر مقایسه‌ای","آرایه یعنی لیستی از مقدارها در یک متغیر؛ مثل فهرست نمره‌ها.",S_JS,E_G],
+[27,"پروژه: ماشین حساب کامل","نوشتن دربارهٔ پروژه","تابع + شرط + حلقه رو ترکیب کن و ماشین‌حساب کامل بساز.",S_JS,E_W],
+[28,"🎉 جشن ماه اول","📊 تست سطح زبان","ماه اول تموم شد! یک تست سطح آنلاین بده و پیشرفت رو ببین.","—",E_R]]},
+{t:"هفتهٔ ۵: DOM + لغات تکنولوژی",d:[
+[29,"DOM و querySelector","مقالهٔ ساده","DOM یعنی دسترسی به عنصرهای صفحه از داخل جاوااسکریپت؛ با querySelector عنصر رو پیدا می‌کنی.",S_DOM,E_R],
+[30,"تغییر متن (textContent)","تمرین گرامر","متن یک عنصر رو از کد عوض کن؛ مثلاً سلام رو به خداحافظ.",S_DOM,E_G],
+[31,"تغییر استایل (style)","نوشتن دربارهٔ DOM","رنگ و سایز عنصرها رو با جاوااسکریپت عوض کن.",S_DOM,E_W],
+[32,"Event Listener (click)","مستندات انگلیسی","یعنی «وقتی کاربر کلیک کرد، این کار رو بکن»؛ تعامل با کاربر.",S_DOM,E_R],
+[33,"تمرین: دکمه‌های رنگی","گرامر مجهول","چند دکمه بساز که با کلیک، رنگ صفحه رو عوض کنن.",S_DOM,E_G],
+[34,"مرور + رفع اشکال","مرور لغات","یک صفحه بساز که با کلیک متن و رنگش عوض بشه.",S_DOM,E_G],
+[35,"☕ استراحت","🎬 فیلم",REST,"—",E_L]]},
+{t:"هفتهٔ ۶: پروژهٔ Todo List",d:[
+[36,"شروع Todo (HTML)","گرامر حال کامل","ساختار لیست کارها: یک input و یک دکمه و یک لیست خالی.",S_DOM,E_G],
+[37,"استایل Todo (CSS)","تمرین گرامر","ظاهرش رو قشنگ کن؛ ردیف‌ها و دکمهٔ حذف.",S_CSS,E_G],
+[38,"اضافه کردن آیتم (JS)","مقاله","با کلیک، متن input به لیست اضافه بشه.",S_DOM,E_R],
+[39,"حذف آیتم","نوشتن دربارهٔ پروژه","کنار هر آیتم دکمهٔ حذف بذار.",S_DOM,E_W],
+[40,"LocalStorage","گرامر شرطی نوع ۲","ذخیرهٔ دائمی در مرورگر؛ حتی بعد از بستن صفحه لیست بمونه.",S_DOM,E_G],
+[41,"تکمیل + باگ‌گیری","مرور لغات","همهٔ اجزا رو تست کن و اشکال‌ها رو برطرف کن.",S_DOM,E_G],
+[42,"☕ استراحت","🎬 فیلم",REST,"—",E_L]]},
+{t:"هفتهٔ ۷: API",d:[
+[43,"مفهوم API و fetch","مستندات API","API یعنی دریافت داده از یک سرور خارجی؛ با fetch درخواست می‌فرستی.",S_API,E_R],
+[44,"تمرین fetch","گرامر نقل قول","یک درخواست ساده بفرست و جواب رو در کنسول ببین.",S_API,E_G],
+[45,"JSON و نمایش داده","تمرین گرامر","JSON یعنی قالب داده؛ جواب سرور رو بخون و نمایش بده.",S_API,E_G],
+[46,"پروژه: اپ آب و هوا","نوشتن دربارهٔ API","از یک API رایگان هوا، دمای شهر رو بگیر و نشون بده.",S_API,E_W],
+[47,"ادامهٔ پروژه + استایل","مقالهٔ تکنولوژی","ظاهر اپ هوا رو قشنگ کن و خطاها رو مدیریت کن.",S_API,E_R],
+[48,"تکمیل + باگ‌گیری","مرور گرامر","تست نهایی پروژه و رفع اشکال.",S_API,E_G],
+[49,"☕ استراحت","🎬 فیلم",REST,"—",E_L]]},
+{t:"هفتهٔ ۸: GitHub + پایان سفر",d:[
+[50,"ساخت GitHub + Git پایه","مطالعهٔ GitHub","Git یعنی نسخه‌کنترل؛ GitHub یعنی خونهٔ آنلاین کدهات.",S_GIT,E_R],
+[51,"آپلود پروژه","README انگلیسی","پروژه‌هات رو push کن و برای هر کدام README بنویس.",S_GIT,E_W],
+[52,"GitHub Pages (انتشار)","تمرین گرامر","پروژه‌ات رو آنلاین کن تا همه ببینن (مثل اپ ماشینت!).",S_GIT,E_G],
+[53,"انتشار پروژه‌های قبلی","نوشتن دربارهٔ GitHub","همهٔ تمرین‌های قبلی رو آنلاین کن.",S_GIT,E_W],
+[54,"مرور کل دوره","📊 تست سطح زبان","از روز ۱ تا الان رو مرور کن و تست سطح بده.","—",E_R],
+[55,"پروژهٔ نهایی دلخواه","مرور لغات","هر چیزی که دوست داری بساز؛ انتخاب آزاد!","—",E_W],
+[56,"🎉 جشن پایان","📊 مقایسهٔ سطح","تمام شد! سطح زبانت رو با روز اول مقایسه کن و جشن بگیر 🏆","—",E_R]]}
 ];
-let S=JSON.parse(localStorage.getItem('plan60')||'{}');
+let ST=JSON.parse(localStorage.getItem('plan60')||'{}');
 const app=document.getElementById('app');
 W.forEach((w,wi)=>{
-  const sec=document.createElement('div');sec.className='week';sec.dataset.w=wi;
+  const sec=document.createElement('div');sec.className='week';
   sec.innerHTML='<div class="whead" onclick="this.parentNode.classList.toggle(\'open\')"><div class="wtop">'+w.t+'<span></span></div><div class="wbar"><div class="wfill"></div></div></div><div class="wbody"></div>';
   const body=sec.querySelector('.wbody');
-  w.d.forEach(([n,c,e])=>{
-    const l=document.createElement('label');l.className='day';l.dataset.n=n;
-    l.innerHTML='<input type="checkbox" '+(S[n]?'checked':'')+'><div class="txt"><span class="num">روز '+n+'</span><span class="code">💻 '+c+'</span><span class="eng">🌍 '+e+'</span></div>';
-    l.querySelector('input').onchange=ev=>{
+  w.d.forEach(([n,c,e,desc,src,eng])=>{
+    const dw=document.createElement('div');dw.className='dw';dw.dataset.n=n;
+    dw.innerHTML='<div class="row"><label class="day"><input type="checkbox" '+(ST[n]?'checked':'')+'><div class="txt"><span class="num">روز '+n+'</span><span class="code">💻 '+c+'</span><span class="eng">🌍 '+e+'</span></div></label><button class="info" onclick="this.closest(\'.dw\').classList.toggle(\'open\')">📖</button></div>'+
+    '<div class="detail">'+TIME+'<br><b>💻 یعنی چی؟</b> '+desc+'<br><b>🎬 از کجا؟</b> '+src+'<br>'+eng+'</div>';
+    dw.querySelector('input').onchange=ev=>{
       const on=ev.target.checked;
-      if(on){S[n]=true;vib();toast('✅ آفرین! روز '+n+' تکمیل شد');}else{delete S[n];toast('↩️ روز '+n+' برگشت');}
+      if(on){ST[n]=true;if(navigator.vibrate)navigator.vibrate(30);toast('✅ آفرین! روز '+n+' تکمیل شد');}
+      else{delete ST[n];toast('↩️ روز '+n+' برگشت');}
       save();
-      const wd=sec.querySelectorAll('.day').length, dn=sec.querySelectorAll('.day.done').length;
-      if(on&&dn===wd)toast('🎉 عالی! کل '+w.t+' تمام شد!');
+      const wd=sec.querySelectorAll('.dw').length,dn=sec.querySelectorAll('.dw.done').length;
+      if(on&&dn===wd)toast('🎉 عالی! کل هفته تمام شد!');
     };
-    body.appendChild(l);
+    body.appendChild(dw);
   });
   app.appendChild(sec);
 });
-function save(){localStorage.setItem('plan60',JSON.stringify(S));draw();}
-function vib(){if(navigator.vibrate)navigator.vibrate(30);}
+function save(){localStorage.setItem('plan60',JSON.stringify(ST));draw();}
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800);}
 function toggleFilter(){const b=document.getElementById('flt');const on=document.body.classList.toggle('hide-done');b.classList.toggle('on',on);}
-function streak(){let best=0,cur=0;for(let i=1;i<=56;i++){if(S[i]){cur++;if(cur>best)best=cur;}else cur=0;}return best;}
+function streak(){let best=0,cur=0;for(let i=1;i<=56;i++){if(ST[i]){cur++;if(cur>best)best=cur;}else cur=0;}return best;}
 function draw(){
-  let c=0;document.querySelectorAll('.day').forEach(d=>{const on=!!S[d.dataset.n];d.classList.toggle('done',on);d.classList.remove('next');if(on)c++;});
-  document.querySelectorAll('.week').forEach(w=>{const t=w.querySelectorAll('.day').length,dn=w.querySelectorAll('.day.done').length;w.querySelector('.wtop span').textContent=dn+'/'+t;w.querySelector('.wfill').style.width=(dn/t*100)+'%';});
-  const nx=document.querySelector('.day:not(.done)');if(nx)nx.classList.add('next');
+  let c=0;document.querySelectorAll('.dw').forEach(d=>{const on=!!ST[d.dataset.n];d.classList.toggle('done',on);d.classList.remove('next');if(on)c++;});
+  document.querySelectorAll('.week').forEach(w=>{const t=w.querySelectorAll('.dw').length,dn=w.querySelectorAll('.dw.done').length;w.querySelector('.wtop span').textContent=dn+'/'+t;w.querySelector('.wfill').style.width=(dn/t*100)+'%';});
+  const nx=document.querySelector('.dw:not(.done)');if(nx)nx.classList.add('next');
   const p=Math.round(c/56*100);
   document.getElementById('fill').style.width=p+'%';
   document.getElementById('pct').textContent=p+'%';
@@ -109,12 +184,9 @@ function draw(){
   document.getElementById('stk').textContent=streak();
   document.getElementById('party').style.display=(c===56)?'flex':'none';
 }
-function goNext(){const nx=document.querySelector('.day:not(.done)');if(!nx){toast('🏆 همه رو تموم کردی!');return;}
-  const wk=nx.closest('.week');wk.classList.add('open');
-  nx.scrollIntoView({behavior:'smooth',block:'center'});}
-function resetAll(){if(confirm('مطمئنی همهٔ تیک‌ها پاک بشن؟')){S={};save();}}
-// باز کردن خودکار هفتهٔ فعال
-(function(){for(const w of document.querySelectorAll('.week')){if(w.querySelector('.day:not(.done)')){w.classList.add('open');break;}}})();
+function goNext(){const nx=document.querySelector('.dw:not(.done)');if(!nx){toast('🏆 همه رو تموم کردی!');return;}nx.closest('.week').classList.add('open');nx.scrollIntoView({behavior:'smooth',block:'center'});}
+function resetAll(){if(confirm('مطمئنی همهٔ تیک‌ها پاک بشن؟')){ST={};save();}}
+(function(){for(const w of document.querySelectorAll('.week')){if(w.querySelector('.dw:not(.done)')){w.classList.add('open');break;}}})();
 draw();
 </script>
 </body>
