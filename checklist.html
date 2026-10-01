@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>چک‌لیست ۶۰ روزه</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Tahoma,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;padding-bottom:80px}
+header{position:sticky;top:0;background:#1e293b;padding:14px 16px;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+h1{font-size:18px;color:#7dd3fc;margin-bottom:8px}
+.bar{background:#334155;height:14px;border-radius:8px;overflow:hidden}
+.fill{background:linear-gradient(90deg,#22c55e,#4ade80);height:100%;width:0%;transition:width .4s;border-radius:8px}
+.stat{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;color:#94a3b8}
+.stat b{color:#4ade80}
+.week{margin:16px 12px;background:#1e293b;border-radius:12px;overflow:hidden}
+.whead{background:#2874a6;padding:12px 16px;font-weight:bold;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.whead span{font-size:12px;background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px}
+.wbody{display:none}
+.week.open .wbody{display:block}
+.day{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #334155;cursor:pointer}
+.day:last-child{border-bottom:none}
+.day input{width:24px;height:24px;accent-color:#22c55e;cursor:pointer;flex-shrink:0}
+.day .txt{flex:1}
+.day .num{font-weight:bold;color:#7dd3fc;font-size:13px}
+.day .code{font-size:14px;display:block}
+.day .eng{font-size:12px;color:#94a3b8;display:block;margin-top:2px}
+.day.done{background:rgba(34,197,94,.1)}
+.day.done .code,.day.done .eng{text-decoration:line-through;opacity:.5}
+.reset{position:fixed;bottom:16px;left:16px;background:#dc2626;color:#fff;border:none;padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit}
+#party{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99;justify-content:center;align-items:center;text-align:center;font-size:22px;color:#4ade80;padding:20px}
+</style>
+</head>
+<body>
+<header>
+<h1>🗺️ چک‌لیست سفر ۶۰ روزه</h1>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<div class="stat"><span>پیشرفت: <b id="pct">0%</b></span><span><b id="cnt">0</b> از 56 روز</span></div>
+</header>
+<div id="app"></div>
+<button class="reset" onclick="resetAll()">🗑 شروع دوباره</button>
+<div id="party">🎉🎊<br>تبریک!<br>کل برنامه رو تموم کردی!<br>تو حالا یک برنامه‌نویس واقعی هستی! 🏆</div>
+<script>
+const W=[
+{t:"هفتهٔ ۱: HTML/CSS + لغات پایه",d:[[1,"تگ‌های HTML (h1-h6, p, div, img)","۲۰ لغت + پادکست"],[2,"لینک و لیست (a, ul, li)","گرامر I am / You are"],[3,"CSS پایه (color, font)","نوشتن ۵ جمله"],[4,"Box Model (margin, padding)","گرامر This / That"],[5,"تمرین: کارت محصول","داستان کوتاه A1"],[6,"مرور هفته + رفع اشکال","نوشتن ۱۰ جمله"],[7,"☕ استراحت","🎬 فیلم با زیرنویس"]]},
+{t:"هفتهٔ ۲: CSS پیشرفته + گذشته",d:[[8,"Flexbox پایه","گرامر گذشته (was/were)"],[9,"تمرین Flexbox (۳ ستون)","جملات گذشته"],[10,"CSS Grid پایه","خبر ساده انگلیسی"],[11,"تمرین Grid (گالری)","جملات سوالی"],[12,"Responsive (media query)","نوشتن دربارهٔ روز"],[13,"پروژه: صفحهٔ پروفایل","ویرایش متن"],[14,"☕ استراحت","🎬 سریال"]]},
+{t:"هفتهٔ ۳: JavaScript مقدماتی",d:[[15,"متغیرها (let, const)","گرامر آینده (will)"],[16,"انواع داده","جملات آینده"],[17,"عملگرها (+ - * /)","متن کوتاه"],[18,"شرط‌ها (if/else)","جملات شرطی"],[19,"تمرین: برنامهٔ سن‌سنج","۱۰ جمله شرطی"],[20,"مرور + رفع اشکال","مرور گرامر"],[21,"☕ استراحت","🎬 فیلم"]]},
+{t:"هفتهٔ ۴: توابع + حلقه‌ها",d:[[22,"توابع (function)","حروف اضافه (in/on/at)"],[23,"تمرین: ماشین حساب","تمرین حروف اضافه"],[24,"حلقهٔ for","داستان کوتاه"],[25,"حلقهٔ while","پاراگراف ۷ جمله‌ای"],[26,"آرایه‌ها (Array)","گرامر مقایسه‌ای"],[27,"پروژه: ماشین حساب کامل","نوشتن دربارهٔ پروژه"],[28,"🎉 جشن ماه اول","📊 تست سطح زبان"]]},
+{t:"هفتهٔ ۵: DOM + لغات تکنولوژی",d:[[29,"DOM و querySelector","مقالهٔ ساده"],[30,"تغییر متن (textContent)","تمرین گرامر"],[31,"تغییر استایل (style)","نوشتن دربارهٔ DOM"],[32,"Event Listener (click)","مستندات انگلیسی"],[33,"تمرین: دکمه‌های رنگی","گرامر مجهول"],[34,"مرور + رفع اشکال","مرور لغات"],[35,"☕ استراحت","🎬 فیلم"]]},
+{t:"هفتهٔ ۶: پروژهٔ Todo List",d:[[36,"شروع Todo (HTML)","گرامر حال کامل"],[37,"استایل Todo (CSS)","تمرین گرامر"],[38,"اضافه کردن آیتم (JS)","مقاله"],[39,"حذف آیتم","نوشتن دربارهٔ پروژه"],[40,"LocalStorage","گرامر شرطی نوع ۲"],[41,"تکمیل + باگ‌گیری","مرور لغات"],[42,"☕ استراحت","🎬 فیلم"]]},
+{t:"هفتهٔ ۷: API",d:[[43,"مفهوم API و fetch","مستندات API"],[44,"تمرین fetch","گرامر نقل قول"],[45,"JSON و نمایش داده","تمرین گرامر"],[46,"پروژه: اپ آب و هوا","نوشتن دربارهٔ API"],[47,"ادامهٔ پروژه + استایل","مقالهٔ تکنولوژی"],[48,"تکمیل + باگ‌گیری","مرور گرامر"],[49,"☕ استراحت","🎬 فیلم"]]},
+{t:"هفتهٔ ۸: GitHub + پایان سفر",d:[[50,"ساخت GitHub + Git پایه","مطالعهٔ GitHub"],[51,"آپلود پروژه","README انگلیسی"],[52,"GitHub Pages (انتشار)","تمرین گرامر"],[53,"انتشار پروژه‌های قبلی","نوشتن دربارهٔ GitHub"],[54,"مرور کل دوره","📊 تست سطح زبان"],[55,"پروژهٔ نهایی دلخواه","مرور لغات"],[56,"🎉 جشن پایان","📊 مقایسهٔ سطح"]]}
+];
+let S=JSON.parse(localStorage.getItem('plan60')||'{}');
+const app=document.getElementById('app');
+W.forEach((w,wi)=>{
+  const sec=document.createElement('div');sec.className='week'+(wi===0?' open':'');
+  sec.innerHTML='<div class="whead" onclick="this.parentNode.classList.toggle(\'open\')">'+w.t+'<span></span></div><div class="wbody"></div>';
+  const body=sec.querySelector('.wbody');
+  w.d.forEach(([n,c,e])=>{
+    const l=document.createElement('label');l.className='day';l.dataset.n=n;
+    l.innerHTML='<input type="checkbox" '+(S[n]?'checked':'')+'><div class="txt"><span class="num">روز '+n+'</span><span class="code">💻 '+c+'</span><span class="eng">🌍 '+e+'</span></div>';
+    l.querySelector('input').onchange=ev=>{S[n]=ev.target.checked;if(!ev.target.checked)delete S[n];save();};
+    body.appendChild(l);
+  });
+  app.appendChild(sec);
+});
+function save(){localStorage.setItem('plan60',JSON.stringify(S));draw();}
+function draw(){
+  let c=0;document.querySelectorAll('.day').forEach(d=>{const n=d.dataset.n;const on=!!S[n];d.classList.toggle('done',on);if(on)c++;});
+  document.querySelectorAll('.week').forEach(w=>{const t=w.querySelectorAll('.day').length;const d=w.querySelectorAll('.day.done').length;w.querySelector('.whead span').textContent=d+'/'+t;});
+  const p=Math.round(c/56*100);
+  document.getElementById('fill').style.width=p+'%';
+  document.getElementById('pct').textContent=p+'%';
+  document.getElementById('cnt').textContent=c;
+  document.getElementById('party').style.display=(c===56)?'flex':'none';
+}
+function resetAll(){if(confirm('مطمئنی همهٔ تیک‌ها پاک بشن؟')){S={};save();}}
+draw();
+</script>
+</body>
+</html>
